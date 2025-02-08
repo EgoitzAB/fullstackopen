@@ -1,15 +1,34 @@
 sequenceDiagram
-    loop javascript
-    Browser->>Browser: begin sending note method, from form to js function
-    end
-    loop javascript
-    Browser->>Browser: catch with eventListener, preventing the default
-    end
-    loop javascript
-    Browser->>Browser: add to list in the browser state
-    end
-    loop javascript
-    Browser->>Browser: redraw in front
-    end
-    Browser->>Server: POST https://studies.cs.helsinki.fi/exampleapp/new_note_spa
-    Note right of Browser: The browser sends to the server to save after processing and rerendering the value in the front
+    participant browser
+    participant server
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/spa
+    activate server
+    server-->>browser: HTML document
+    deactivate server
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/main.css
+    activate server
+    server-->>browser: the css file
+    deactivate server
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/main.js
+    activate server
+    server-->>browser: the JavaScript file
+    deactivate server
+
+    Note right of browser: The browser starts executing the JavaScript code that fetches the JSON from the server
+
+    browser->>server: GET https://studies.cs.helsinki.fi/exampleapp/data.json
+    activate server
+    server-->>browser: [{ "content": "HTML is easy", "date": "2023-1-1" }, ... ]
+    deactivate server
+
+    Note right of browser: The browser executes the callback function that renders the notes
+
+    browser->>server: GET https://studies.cs.helsinki.fi/favicon.ico
+    activate server
+    server-->>browser: 404 response, Not Found
+    deactivate server
+
+    Note right of browser: The favicon.ico is missing
