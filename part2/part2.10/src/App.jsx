@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import rest from './services/rest'
 
 const Filter = ({searching, handleFilter}) => {
   return (
@@ -53,14 +54,13 @@ const App = () => {
   
   useEffect(() => {
     console.log('effect')
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
+    rest.getAll()
+      .then(initialNames => {
+        console.log('Data recibida del servidor:', initialNames);
         console.log('promise fulfilled')
-        setPersons(response.data)
+        setPersons(initialNames)
       })
-  }
-  , [])
+  }, [])
   console.log('render', persons.length, 'persons')
   
   const handleNameChange = (event) => {
@@ -103,10 +103,15 @@ const App = () => {
       number: newNumber
     }
 
-    setPersons(persons.concat(newPerson))
-    setNewName('')
-    setNewNumber('')
-    console.log('button clicked', event)
+    rest.create(newPerson).then(response => {
+      setPersons(persons.concat(response))
+      setNewName('')
+      setNewNumber('')
+    }
+    ).catch(error => {
+      console.log(error)
+    }
+    )
   }
 
   return (
