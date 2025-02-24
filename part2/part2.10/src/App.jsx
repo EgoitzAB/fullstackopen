@@ -34,11 +34,13 @@ const PersonForm = ({addPerson, newName, handleNameChange, newNumber, handleNumb
 }
 
 
-const Persons = ({filteredPersons}) => {
+const Persons = ({filteredPersons, handleDelete}) => {
   return (
     <ul>
       {filteredPersons.map((person) => (
-        <li key={person.id}>{person.name}: {person.number}</li>
+        <li key={person.id}>{person.name}: {person.number}
+        <button onClick={() => handleDelete(person.id, person.name)}>delete</button>
+        </li>
       ))}
     </ul>
   )
@@ -89,7 +91,16 @@ const App = () => {
     const existingNumber = persons.filter(person => person.number === newNumber);
 
     if (existingPersons.length > 0) {
-      alert(`${newName} ya existe en la agenda telefónica`);
+      window.confirm(`${newName} ya existe en la agenda telefónica, quieres actualizar el número?`);
+      const person = existingPersons[0];
+      const changedPerson = {...person, number: newNumber};
+      rest.update(person.id, changedPerson).then(response => {
+        setPersons(persons.map(p => p.id !== person.id ? p : response))
+        setNewName('')
+        setNewNumber('')
+      }).catch(error => {
+        console.log(error)
+      })
       return;
     }
     
@@ -111,7 +122,19 @@ const App = () => {
     ).catch(error => {
       console.log(error)
     }
-    )
+    )  
+  }
+
+  
+  const handleDelete = (id, name) => {
+    const person = persons.find(person => person.id === id)
+    if (window.confirm(`Delete ${name}?`)) {
+      rest.deletePerson(id).then(() => {
+        setPersons(persons.filter(person => person.id !== id))
+      }).catch(error => {
+        console.log(error)
+      })
+    }
   }
 
   return (
@@ -121,7 +144,7 @@ const App = () => {
       <h2>add a new</h2>
       <PersonForm addPerson={addPerson} newName={newName} handleNameChange={handleNameChange} newNumber={newNumber} handleNumberChange={handleNumberChange}/>
       <h2>Numbers</h2>
-      <Persons filteredPersons={filteredPersons}/>
+      <Persons filteredPersons={filteredPersons} handleDelete={handleDelete}/>
       <div>debug: {newName}</div>    
     </div>
   )
