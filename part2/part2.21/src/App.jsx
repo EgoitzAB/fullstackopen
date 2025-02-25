@@ -5,6 +5,7 @@ const App = () => {
   const [search, setSearch] = useState("");
   const [countries, setCountries] = useState([]);
   const [filteredCountries, setFilteredCountries] = useState([]);
+  const [selectedCountry, setSelectedCountry] = useState(null);
 
   useEffect(() => {
     axios.get("https://studies.cs.helsinki.fi/restcountries/api/all")
@@ -14,6 +15,7 @@ const App = () => {
   useEffect(() => {
     if (search.trim() === "") {
       setFilteredCountries([]);
+      setSelectedCountry(null);
       return;
     }
 
@@ -21,6 +23,7 @@ const App = () => {
       country.name.common.toLowerCase().includes(search.toLowerCase())
     );
     setFilteredCountries(filtered);
+    setSelectedCountry(filtered.length === 1 ? filtered[0] : null);
   }, [search, countries]);
 
   return (
@@ -33,12 +36,17 @@ const App = () => {
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {filteredCountries.length > 10 ? (
+      {selectedCountry ? (
+        <CountryDetail country={selectedCountry} />
+      ) :
+        filteredCountries.length > 10 ? (
         <p>Demasiadas coincidencias, especifica más la búsqueda.</p>
       ) : filteredCountries.length > 1 ? (
         <ul>
           {filteredCountries.map((country) => (
-            <li key={country.cca2}>{country.name.common}</li>
+            <li key={country.cca2}>{country.name.common}
+              <button onClick={() => setSelectedCountry(country)}>Mostrar</button>
+            </li>
           ))}
         </ul>
       ) : filteredCountries.length === 1 ? (
