@@ -1,6 +1,32 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
 import rest from './services/rest'
+
+
+const Notification = ({message, type}) => {
+  
+  if (message === null) {
+    return null
+  }
+
+  const notificationStyle = {
+    color: type === 'success' ? 'green' : 'red',
+    background: 'lightgrey',
+    fontSize: 20,
+    borderStyle: 'solid',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 10,
+  }
+
+
+
+  return (
+    <div className="error" style={notificationStyle}>
+      {message}
+    </div>
+  )
+}
+
 
 const Filter = ({searching, handleFilter}) => {
   return (
@@ -53,7 +79,8 @@ const App = () => {
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [searching, setSearching] = useState('')
-  
+  const [notification, setNotification] = useState({ message: null, type: '' })
+
   useEffect(() => {
     console.log('effect')
     rest.getAll()
@@ -78,6 +105,12 @@ const App = () => {
     setSearching(event.target.value)
   }
 
+  const handleNotification = (message, type) => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification({ message: null, type: '' }), 5000);
+  }
+
+
   const filteredPersons = persons.filter(person => person.name.toLowerCase().includes(searching.toLowerCase()))
 
   const addPerson = (event) => {
@@ -96,10 +129,13 @@ const App = () => {
       const changedPerson = {...person, number: newNumber};
       rest.update(person.id, changedPerson).then(response => {
         setPersons(persons.map(p => p.id !== person.id ? p : response))
+        handleNotification(`Updated ${newName}`, 'success');
         setNewName('')
         setNewNumber('')
       }).catch(error => {
-        console.log(error)
+        handleNotification(`Information of ${newName} has already been removed from server`, 'error');
+        setPersons(persons.filter(p => p.id !== person.id
+        ))
       })
       return;
     }
@@ -116,13 +152,13 @@ const App = () => {
 
     rest.create(newPerson).then(response => {
       setPersons(persons.concat(response))
+      handleNotification(`Added ${newName}`, 'success');
       setNewName('')
       setNewNumber('')
-    }
-    ).catch(error => {
-      console.log(error)
-    }
-    )  
+    })
+    .catch(error => {
+      handleNotification(error.response.data.error, 'error');
+    })  
   }
 
   
@@ -131,15 +167,16 @@ const App = () => {
     if (window.confirm(`Delete ${name}?`)) {
       rest.deletePerson(id).then(() => {
         setPersons(persons.filter(person => person.id !== id))
+        handleNotification(`Deleted ${name}`, 'success');
       }).catch(error => {
-        console.log(error)
-      })
-    }
-  }
+        handleNotification(`Information of ${name} has already been removed from server`, 'error');
+         })
+  }}
 
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={notification.message} type={notification.type}/>
       <Filter searching={searching} handleFilter={handleFilter}/>
       <h2>add a new</h2>
       <PersonForm addPerson={addPerson} newName={newName} handleNameChange={handleNameChange} newNumber={newNumber} handleNumberChange={handleNumberChange}/>
