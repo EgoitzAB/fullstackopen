@@ -124,7 +124,7 @@ const App = () => {
     const existingNumber = persons.filter(person => person.number === newNumber);
 
     if (existingPersons.length > 0) {
-      window.confirm(`${newName} ya existe en la agenda telefónica, quieres actualizar el número?`);
+      if (window.confirm(`${newName} ya existe en la agenda telefónica, quieres actualizar el número?`)) {
       const person = existingPersons[0];
       const changedPerson = {...person, number: newNumber};
       rest.update(person.id, changedPerson).then(response => {
@@ -133,10 +133,14 @@ const App = () => {
         setNewName('')
         setNewNumber('')
       }).catch(error => {
-        handleNotification(`Information of ${newName} has already been removed from server`, 'error');
-        setPersons(persons.filter(p => p.id !== person.id
-        ))
+        if (error.response && error.response.status === 404) {
+        handleNotification(`Information of ${newName} has already been removed from server`, 'error')
+        setPersons(persons.filter(p => p.id !== person.id))
+      } else {
+        handleNotification(error.response.data.error, 'error')
+        }
       })
+    }
       return;
     }
     
@@ -170,6 +174,9 @@ const App = () => {
         handleNotification(`Deleted ${name}`, 'success');
       }).catch(error => {
         handleNotification(`Information of ${name} has already been removed from server`, 'error');
+        setTimeout(() => {
+          window.location.reload()
+        }, 2000)
          })
   }}
 
@@ -185,6 +192,7 @@ const App = () => {
       <div>debug: {newName}</div>    
     </div>
   )
+
 }
 
 export default App
