@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 
+const api_key = import.meta.env.VITE_SOME_KEY;
+
 const App = () => {
   const [search, setSearch] = useState("");
   const [countries, setCountries] = useState([]);
@@ -59,6 +61,17 @@ const App = () => {
 }
 
 const CountryDetail = ({ country }) => {
+  const [weather, setWeather] = useState(null);
+
+  useEffect(() => {
+    if (country.capital) {
+      const capital = country.capital[0];
+      axios
+        .get(`https://api.openweathermap.org/data/2.5/weather?q=${capital}&appid=${api_key}&units=metric`)
+        .then(response => setWeather(response.data));
+    }
+  }, [country]);
+
   return (
     <div>
       <h2>{country.name.common}</h2>
@@ -71,6 +84,16 @@ const CountryDetail = ({ country }) => {
         ))}
       </ul>
       <img src={country.flags.svg} alt={`Bandera de ${country.name.common}`} width="200" />
+   
+      {weather && (
+        <div>
+          <h3>Clima en {country.capital[0]}</h3>
+          <p><strong>Temperatura:</strong> {weather.main.temp}°C</p>
+          <p><strong>Viento:</strong> {weather.wind.speed} m/s</p>
+          <img src={`https://openweathermap.org/img/wn/${weather.weather[0].icon}@2x.png`} alt="Icono del clima" />
+        </div>
+      )}
+   
     </div>
   );
 }
