@@ -80,6 +80,7 @@ const App = () => {
   const [newNumber, setNewNumber] = useState('')
   const [searching, setSearching] = useState('')
   const [notification, setNotification] = useState({ message: null, type: '' })
+  const [errorMessage, setErrorMessage] = useState(null)
 
   useEffect(() => {
     console.log('effect')
@@ -127,17 +128,22 @@ const App = () => {
       if (window.confirm(`${newName} ya existe en la agenda telefónica, quieres actualizar el número?`)) {
       const person = existingPersons[0];
       const changedPerson = {...person, number: newNumber};
-      rest.update(person.id, changedPerson).then(response => {
+
+      rest.update(person.id, changedPerson)
+        .then(response => {
         setPersons(persons.map(p => p.id !== person.id ? p : response))
         handleNotification(`Updated ${newName}`, 'success');
         setNewName('')
         setNewNumber('')
-      }).catch(error => {
-        if (error.response && error.response.status === 404) {
+      })
+      .catch(error => {
+        const errorMessage = error.response?.data?.error || error.message || 'Error updating person';
+
+        if (error.response?.status === 404) {
         handleNotification(`Information of ${newName} has already been removed from server`, 'error')
         setPersons(persons.filter(p => p.id !== person.id))
       } else {
-        handleNotification(error.response.data.error, 'error')
+        handleNotification(errorMessage, 'error')
         }
       })
     }
@@ -161,7 +167,8 @@ const App = () => {
       setNewNumber('')
     })
     .catch(error => {
-      handleNotification(error.response.data.error, 'error');
+      const errorMessage = error.response?.data?.error || 'Error adding person';
+      handleNotification(errorMessage, 'error');
     })  
   }
 
@@ -173,7 +180,11 @@ const App = () => {
         setPersons(persons.filter(person => person.id !== id))
         handleNotification(`Deleted ${name}`, 'success');
       }).catch(error => {
-        handleNotification(`Information of ${name} has already been removed from server`, 'error');
+        const errorMessage = error.response?.data?.error || error.message || 'Error deleting person';
+        handleNotification(errorMessage, 'error');
+        if (error.response?.status === 404) {
+          setPersons(persons.filter(person => person.id !== id));
+        }
         setTimeout(() => {
           window.location.reload()
         }, 2000)
