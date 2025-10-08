@@ -39,3 +39,13 @@ test('a specific blog is within the returned blogs', async () => {
 after(async () => {
   await mongoose.connection.close()
 })
+
+test('blogs have id property', async () => {
+  const response = await api.get('/api/blogs').expect(200).expect('Content-Type', /application\/json/)
+
+  for (const blog of response.body) {
+    assert.ok(blog.id)
+    assert.strictEqual(blog._id, undefined)
+    assert.strictEqual(blog.__v, undefined) 
+  }
+})
