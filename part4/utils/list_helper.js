@@ -18,6 +18,9 @@ const favoriteBlog = (blogs) => {
   };
 }
 
+const mostBlogs = (blogs) => {
+  // Implementation not provided
+}
 module.exports = {
   dummy,
   totalLikes,
