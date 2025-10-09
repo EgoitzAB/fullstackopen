@@ -101,6 +101,11 @@ beforeEach(async () => {
     assert.match(result.body.error || '', /password.*(missing|short|too short)/i)    
   })
 
+  test('users are returned as json and include the seeded user', async () => {
+    const res = await api.get('/api/users').expect(200).expect('Content-Type', /json/);
+    const usernames = res.body.map(u => u.username);
+    assert.ok(usernames.includes('root'));
+  });
 after(async () => {
   await mongoose.connection.close()
 })
