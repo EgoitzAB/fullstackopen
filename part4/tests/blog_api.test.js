@@ -73,3 +73,24 @@ test('a valid blog can be added', async () => {
     const titles = blogsAtEnd.map(b => b.title)
     assert.ok(titles.includes('New Blog Post'))
 })
+
+test('if likes property is missing, it will default to 0', async () => {
+  const newBlog = {
+    title: 'Blog Without Likes',
+    author: 'Jane Doe',
+    url: 'http://example.com/blog-without-likes',
+  }
+
+  const response = await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  assert.strictEqual(response.body.likes, 0)
+
+  const blogsAtEnd = await helper.blogsInDb()
+  const addedBlog = blogsAtEnd.find(b => b.title === 'Blog Without Likes')
+  assert.ok(addedBlog)
+  assert.strictEqual(addedBlog.likes, 0)
+})
