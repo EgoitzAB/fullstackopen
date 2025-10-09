@@ -188,3 +188,34 @@ test('getting a blog with an invalid id returns 400', async () => {
     .get(`/api/blogs/${invalidId}`)
     .expect(400)
 })
+
+test('a blog can be updated', async () => {
+  const blogsAtStart = await helper.blogsInDb()
+  const blogToUpdate = blogsAtStart[0]
+
+  const updatedBlogData = {
+    title: 'Updated Title',
+    author: 'Updated Author',
+    url: 'http://example.com/updated-url',
+    likes: 10,
+  }
+
+  const response = await api
+    .put(`/api/blogs/${blogToUpdate.id}`)
+    .send(updatedBlogData)
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+
+  assert.deepStrictEqual(response.body.title, updatedBlogData.title)
+  assert.deepStrictEqual(response.body.author, updatedBlogData.author)
+  assert.deepStrictEqual(response.body.url, updatedBlogData.url)
+  assert.deepStrictEqual(response.body.likes, updatedBlogData.likes)
+
+  const blogsAtEnd = await helper.blogsInDb()
+  const updatedBlog = blogsAtEnd.find(b => b.id === blogToUpdate.id)
+  assert.ok(updatedBlog)
+  assert.deepStrictEqual(updatedBlog.title, updatedBlogData.title)
+  assert.deepStrictEqual(updatedBlog.author, updatedBlogData.author)
+  assert.deepStrictEqual(updatedBlog.url, updatedBlogData.url)
+  assert.deepStrictEqual(updatedBlog.likes, updatedBlogData.likes)
+})
