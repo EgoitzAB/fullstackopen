@@ -49,3 +49,27 @@ test('blogs have id property', async () => {
     assert.strictEqual(blog.__v, undefined) 
   }
 })
+
+test('a valid blog can be added', async () => {
+  const newBlog = {
+    title: 'New Blog Post',
+    author: 'John Doe',
+    url: 'http://example.com/new-blog-post',
+    likes: 5,
+  }
+
+  const postResponse = await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+    assert.ok(postResponse.body.id)
+    assert.equal(postResponse.body._id, undefined)
+
+    const blogsAtEnd = await helper.blogsInDb()
+    assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length + 1)
+    
+    const titles = blogsAtEnd.map(b => b.title)
+    assert.ok(titles.includes('New Blog Post'))
+})
