@@ -9,6 +9,7 @@ const mongoose = require('mongoose')
 // Routers
 const blogsRouter = require('./controllers/blogs')     // ← NUEVO
 const usersRouter = require('./controllers/users')
+const loginRouter = require('./controllers/login')     // ← NUEVO
 // Utils
 const middleware = require('./utils/middleware')
 const logger = require('./utils/logger')
@@ -28,6 +29,7 @@ app.use(middleware.requestLogger)
 // Monta RUTAS
 app.use('/api/blogs', blogsRouter)   // ← requerido para 4.2 (blogs)
 app.use('/api/users', usersRouter)   // ← requerido para 4.3 (users)
+app.use('/api/login', loginRouter)   // ← requerido para 4.3 (login)
 
 // Middlewares finales
 app.use(middleware.unknownEndpoint)
