@@ -322,3 +322,33 @@ test('non-owner cannot delete a blog', async () => {
     .set('Authorization', anotherAuthToken)
     .expect(403)
 })
+
+test('created blog is linked to the user', async () => {
+  const usersResponse = await api.get('/api/users').expect(200)
+  const root = usersResponse.body.find(u => u.username === 'root')
+  assert.ok(root)
+  assert.strictEqual(root.blogs.length, 0)
+
+  const createResponse = await api
+    .post('/api/blogs')
+    .set('Authorization', `Bearer ${authToken}`)
+    .send({
+      title: 'Blog linked to user',
+      author: 'User Link',
+      url: 'http://example.com/blog-linked-to-user',
+      likes: 1,
+    })
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  assert.strictEqual(createResponse.body.user.username, 'root')
+  assert.strictEqual(createResponse.body.user.name, 'Superuser')
+
+  const getById = await api
+    .get(`/api/blogs/${createResponse.body.id}`)
+    .expect(200)
+    .expect('Content-Type', /application\/json/)
+
+  assert.strictEqual(getById.body.user.username, 'root')
+  assert.strictEqual(getById.body.user.name, 'Superuser')
+})
