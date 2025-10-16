@@ -1,6 +1,16 @@
 const blogsRouter = require('express').Router()
 const Blog = require('../models/blog')
 const User = require('../models/user')
+const jwt = require('jsonwebtoken')
+
+
+const getTokenFrom = request => {
+  const authorization = request.get('authorization')
+  if (authorization && authorization.toLowerCase().startsWith('bearer ')) {
+    return authorization.substring(7)
+  }
+  return null
+}
 
 
 blogsRouter.get('/', async (_request, response) => {
@@ -18,10 +28,25 @@ blogsRouter.get('/:id', async (_request, response) => {
 })
 
 blogsRouter.post('/', async (request, response) => {
-  const user = await User.findOne({}) // Temporary: associate all blogs to the first user
-  if (!user) {
-    return response.status(400).json({ error: 'no users found to associate blog with' })
+  const token = getTokenFrom(request)
+  if (!token) {
+    return response.status(401).json({ error: 'token missing' })
   }
+  
+  let decodedToken
+  try {
+    decodedToken = jwt.verify(token, process.env.SECRET)
+  } catch (error) {
+    return response.status(401).json({ error: 'token missing or invalid' })
+  }
+  if (!decodedToken || !decodedToken.id) {
+    return response.status(401).json({ error: 'token invalid' })
+  }
+  const user = await User.findById(decodedToken.id) // Temporary: associate all blogs to the first user
+  if (!user) {
+    return response.status(401).json({ error: 'no users found to associate blog with' })
+  }
+  
   const blog = new Blog({
     title: request.body.title,
     author: request.body.author,

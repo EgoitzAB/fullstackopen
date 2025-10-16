@@ -7,6 +7,10 @@ const api = supertest(app)
 const Blog = require('../models/blog')
 const helper = require('./test_helper')
 const config = require('../utils/config')
+const User = require('../models/user')
+const bcrypt = require('bcrypt')
+
+let authToken
 
 
 before(async () => {
@@ -14,6 +18,17 @@ before(async () => {
 });
 
 beforeEach(async () => {
+  await User.deleteMany({})
+  const passwordHash = await bcrypt.hash('sekret', 10)
+  await new User({ username: 'root', name: 'Superuser', passwordHash }).save()
+  
+  const loginResponse = await api
+    .post('/api/login')
+    .send({ username: 'root', password: 'sekret' })
+    .expect(200)
+
+  authToken = `Bearer ${loginResponse.body.token}`
+
   await Blog.deleteMany({})
   await Blog.insertMany(helper.initialBlogs)
 })
@@ -60,6 +75,7 @@ test('a valid blog can be added', async () => {
 
   const postResponse = await api
     .post('/api/blogs')
+    .set('Authorization', authToken)
     .send(newBlog)
     .expect(201)
     .expect('Content-Type', /application\/json/)
@@ -83,6 +99,7 @@ test('if likes property is missing, it will default to 0', async () => {
 
   const response = await api
     .post('/api/blogs')
+    .set('Authorization', authToken)
     .send(newBlog)
     .expect(201)
     .expect('Content-Type', /application\/json/)
@@ -103,6 +120,7 @@ test('blog without title and url is not added', async () => {
 
   await api
     .post('/api/blogs')
+    .set('Authorization', authToken)
     .send(newBlog)
     .expect(400)
 
@@ -119,6 +137,7 @@ test ('a blog without url is not added', async () => {
 
   await api
     .post('/api/blogs')
+    .set('Authorization', authToken)
     .send(newBlog)
     .expect(400)
 
@@ -135,6 +154,7 @@ test ('a blog without title is not added', async () => {
 
   await api
     .post('/api/blogs')
+    .set('Authorization', authToken)
     .send(newBlog)
     .expect(400)
 
@@ -218,4 +238,21 @@ test('a blog can be updated', async () => {
   assert.deepStrictEqual(updatedBlog.author, updatedBlogData.author)
   assert.deepStrictEqual(updatedBlog.url, updatedBlogData.url)
   assert.deepStrictEqual(updatedBlog.likes, updatedBlogData.likes)
+})
+
+test('adding a blog fails with 401 if token is not provided', async () => {
+  const newBlog = {
+    title: 'Unauthorized Blog Post',
+    author: 'John Doe',
+    url: 'http://example.com/unauthorized-blog-post',
+    likes: 5,
+  }
+
+  await api
+    .post('/api/blogs')
+    .send(newBlog)
+    .expect(401)
+
+  const blogsAtEnd = await helper.blogsInDb()
+  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
 })
