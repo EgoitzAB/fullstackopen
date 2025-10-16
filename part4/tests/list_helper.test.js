@@ -8,9 +8,6 @@ test('dummy returns one', () => {
   const result = listHelper.dummy(blogs)
   assert.strictEqual(result, 1)
 })
-
-describe('total likes', () => {
-  
   const listWithOneBlog = [
     {
       _id: '5a422aa71b54a676234d17f8',
@@ -72,7 +69,9 @@ describe('total likes', () => {
       __v: 0
     }  
   ]
-  
+
+describe('total likes', () => {
+
   test('of empty list is zero', () => {
     const result = listHelper.totalLikes([])
     assert.strictEqual(result, 0)
@@ -152,3 +151,27 @@ describe('favorite blog', () => {
     })
   })
   })
+
+describe('most blogs', () => {
+  test('author with most blogs', () => {
+    const result = listHelper.mostBlogs(blog_list)
+    assert.deepStrictEqual(result, { author: 'Robert C. Martin', blogs: 3 })
+  })
+
+  test('of empty list is null', () => {
+    const result = listHelper.mostBlogs([])
+    assert.strictEqual(result, null)
+  })
+})
+
+describe('most likes', () => {
+  test('author with most likes', () => {
+    const result = listHelper.mostLikes(blog_list)
+    assert.deepStrictEqual(result, { author: 'Edsger W. Dijkstra', likes: 17 })
+  })
+
+  test('of empty list is null', () => {
+    const result = listHelper.mostLikes([])
+    assert.strictEqual(result, null)
+  })
+})
