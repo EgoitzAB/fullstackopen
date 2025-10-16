@@ -27,7 +27,7 @@ beforeEach(async () => {
     .send({ username: 'root', password: 'sekret' })
     .expect(200)
 
-  authToken = `Bearer ${loginResponse.body.token}`
+  authToken = loginResponse.body.token
 
   await Blog.deleteMany({})
   await Blog.insertMany(helper.initialBlogs)
@@ -75,7 +75,7 @@ test('a valid blog can be added', async () => {
 
   const postResponse = await api
     .post('/api/blogs')
-    .set('Authorization', authToken)
+    .set('Authorization', `Bearer ${authToken}`)
     .send(newBlog)
     .expect(201)
     .expect('Content-Type', /application\/json/)
@@ -99,7 +99,7 @@ test('if likes property is missing, it will default to 0', async () => {
 
   const response = await api
     .post('/api/blogs')
-    .set('Authorization', authToken)
+    .set('Authorization', `Bearer ${authToken}`)
     .send(newBlog)
     .expect(201)
     .expect('Content-Type', /application\/json/)
@@ -120,7 +120,7 @@ test('blog without title and url is not added', async () => {
 
   await api
     .post('/api/blogs')
-    .set('Authorization', authToken)
+    .set('Authorization', `Bearer ${authToken}`)
     .send(newBlog)
     .expect(400)
 
@@ -137,7 +137,7 @@ test ('a blog without url is not added', async () => {
 
   await api
     .post('/api/blogs')
-    .set('Authorization', authToken)
+    .set('Authorization', `Bearer ${authToken}`)
     .send(newBlog)
     .expect(400)
 
@@ -154,7 +154,7 @@ test ('a blog without title is not added', async () => {
 
   await api
     .post('/api/blogs')
-    .set('Authorization', authToken)
+    .set('Authorization', `Bearer ${authToken}`)
     .send(newBlog)
     .expect(400)
 
@@ -246,7 +246,7 @@ test('adding a blog fails with 401 if token is not provided', async () => {
 test('creater can delete their blog', async () => {
   const createResponse = await api
     .post('/api/blogs')
-    .set('Authorization', authToken)
+    .set('Authorization', `Bearer ${authToken}`)
     .send({
       title: 'Blog to be deleted',
       author: 'Deleter',
@@ -260,7 +260,7 @@ test('creater can delete their blog', async () => {
 
   await api
     .delete(`/api/blogs/${blogId}`)
-    .set('Authorization', authToken)
+    .set('Authorization', `Bearer ${authToken}`)
     .expect(204)
 
   const blogsAtEnd = await helper.blogsInDb()
@@ -272,7 +272,7 @@ test('creater can delete their blog', async () => {
 test('deletion fails with 401 if not the creator', async () => {
   const createResponse = await api
     .post('/api/blogs')
-    .set('Authorization', authToken)
+    .set('Authorization', `Bearer ${authToken}`)
     .send({
       title: 'Blog that should not be deleted',
       author: 'Another User',
@@ -291,7 +291,7 @@ test('deletion fails with 401 if not the creator', async () => {
 test('non-owner cannot delete a blog', async () => {
   const createResponse = await api
     .post('/api/blogs')
-    .set('Authorization', authToken)
+    .set('Authorization', `Bearer ${authToken}`)
     .send({
       title: 'Blog that should not be deleted by non-owner',
       author: 'Owner',

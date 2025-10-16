@@ -26,11 +26,12 @@ app.use(express.static('dist'))
 app.use(express.json())
 app.use(middleware.requestLogger)
 app.use(middleware.tokenExtractor)
+app.use(middleware.userExtractor)
 
 // Monta RUTAS
-app.use('/api/blogs', blogsRouter)   // ← requerido para 4.2 (blogs)
-app.use('/api/users', usersRouter)   // ← requerido para 4.3 (users)
-app.use('/api/login', loginRouter)   // ← requerido para 4.3 (login)
+app.use('/api/blogs', blogsRouter)
+app.use('/api/users', usersRouter)
+app.use('/api/login', loginRouter)
 
 // Middlewares finales
 app.use(middleware.unknownEndpoint)
