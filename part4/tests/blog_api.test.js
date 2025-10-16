@@ -162,20 +162,6 @@ test ('a blog without title is not added', async () => {
   assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
 })
 
-test('a blog can be deleted', async () => {
-  const blogsAtStart = await helper.blogsInDb()
-  const blogToDelete = blogsAtStart[0]
-
-  await api
-    .delete(`/api/blogs/${blogToDelete.id}`)
-    .expect(204)
-
-  const blogsAtEnd = await helper.blogsInDb()
-  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length - 1)
-
-  const titles = blogsAtEnd.map(b => b.title)
-  assert.ok(!titles.includes(blogToDelete.title))
-})
 
 test('a blog can be viewed by id', async () => {
   const blogsAtStart = await helper.blogsInDb()
@@ -255,4 +241,84 @@ test('adding a blog fails with 401 if token is not provided', async () => {
 
   const blogsAtEnd = await helper.blogsInDb()
   assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+})
+
+test('creater can delete their blog', async () => {
+  const createResponse = await api
+    .post('/api/blogs')
+    .set('Authorization', authToken)
+    .send({
+      title: 'Blog to be deleted',
+      author: 'Deleter',
+      url: 'http://example.com/blog-to-be-deleted',
+      likes: 1,
+    })
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  const blogId = createResponse.body.id
+
+  await api
+    .delete(`/api/blogs/${blogId}`)
+    .set('Authorization', authToken)
+    .expect(204)
+
+  const blogsAtEnd = await helper.blogsInDb()
+  const ids = blogsAtEnd.map(b => b.id)
+  assert.ok(!ids.includes(blogId))
+  assert.strictEqual(blogsAtEnd.length, helper.initialBlogs.length)
+})
+
+test('deletion fails with 401 if not the creator', async () => {
+  const createResponse = await api
+    .post('/api/blogs')
+    .set('Authorization', authToken)
+    .send({
+      title: 'Blog that should not be deleted',
+      author: 'Another User',
+      url: 'http://example.com/blog-that-should-not-be-deleted',
+      likes: 1,
+    })
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+  
+  await api
+    .delete(`/api/blogs/${createResponse.body.id}`)
+    .expect(401)
+  
+  })
+
+test('non-owner cannot delete a blog', async () => {
+  const createResponse = await api
+    .post('/api/blogs')
+    .set('Authorization', authToken)
+    .send({
+      title: 'Blog that should not be deleted by non-owner',
+      author: 'Owner',
+      url: 'http://example.com/blog-that-should-not-be-deleted-by-non-owner',
+      likes: 1,
+    })
+    .expect(201)
+    .expect('Content-Type', /application\/json/)
+
+  await api
+    .post('/api/users')
+    .send({
+      username: 'anotheruser',
+      name: 'Another User',
+      password: 'password123'
+    })
+    .expect(201)
+  
+  const loginResponse = await api
+    .post('/api/login')
+    .send({ username: 'anotheruser', password: 'password123' })
+    .expect(200)
+
+  const anotherAuthToken = `Bearer ${loginResponse.body.token}`
+
+  await api
+    .delete(`/api/blogs/${createResponse.body.id}`)
+    .set('Authorization', anotherAuthToken)
+    .expect(403)
 })
